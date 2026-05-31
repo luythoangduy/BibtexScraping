@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1338" height="510" viewBox="0 0 1338 510" role="img" aria-labelledby="title desc">
+  <title id="title">Scholar BibTeX Fetcher preview</title>
+  <desc id="desc">Preview of the localhost Scholar BibTeX Fetcher interface with a sample Excel file processed successfully.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f5f7fa; }
+      .panel { fill: #ffffff; stroke: #cfd8e3; stroke-width: 1; }
+      .muted { fill: #48607a; font: 14px Arial, sans-serif; }
+      .body { fill: #0f2033; font: 14px Arial, sans-serif; }
+      .title { fill: #071728; font: 700 28px Arial, sans-serif; }
+      .h2 { fill: #071728; font: 700 16px Arial, sans-serif; }
+      .label { fill: #48607a; font: 13px Arial, sans-serif; }
+      .metric { fill: #071728; font: 700 28px Arial, sans-serif; }
+      .small { fill: #48607a; font: 12px Arial, sans-serif; }
+      .buttonText { fill: #ffffff; font: 17px Arial, sans-serif; }
+      .outlineText { fill: #071728; font: 17px Arial, sans-serif; }
+      .th { fill: #0f2033; font: 700 14px Arial, sans-serif; }
+      .td { fill: #0f2033; font: 14px Arial, sans-serif; }
+      .mono { fill: #0f2033; font: 13px "Cascadia Mono", Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1338" height="510"/>
+
+  <rect class="panel" x="6" y="5" width="1326" height="108" rx="7"/>
+  <text class="title" x="32" y="54">Scholar BibTeX Fetcher</text>
+  <text class="muted" x="32" y="84">Excel title list to BibTeX via SerpApi Google Scholar.</text>
+  <rect class="panel" x="1142" y="37" width="166" height="44" rx="6"/>
+  <text class="outlineText" x="1189" y="65">Sample Excel</text>
+  <path d="M1164 51h12l5 5v13h-17z" fill="none" stroke="#0f2033" stroke-width="2"/>
+  <path d="M1176 51v6h5" fill="none" stroke="#0f2033" stroke-width="2"/>
+  <path d="M1168 61h9M1168 66h9" stroke="#0f2033" stroke-width="1.5"/>
+
+  <rect class="panel" x="6" y="132" width="1326" height="121" rx="7"/>
+  <text class="label" x="27" y="176">SerpApi API key</text>
+  <rect class="panel" x="27" y="188" width="260" height="44" rx="6"/>
+  <text class="muted" x="39" y="216">Leave blank if SERPAPI_API_KEY is set</text>
+
+  <text class="label" x="303" y="176">Excel file</text>
+  <rect class="panel" x="303" y="188" width="260" height="44" rx="6"/>
+  <rect x="315" y="196" width="96" height="25" rx="3" fill="#ffffff" stroke="#9aa7b6"/>
+  <text class="body" x="323" y="214">Choose File</text>
+  <text class="body" x="416" y="215">sample-papers.xlsx</text>
+
+  <rect x="579" y="188" width="164" height="44" rx="6" fill="#0f766e"/>
+  <circle cx="607" cy="210" r="7" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <path d="M612 215l7 7" stroke="#ffffff" stroke-width="2"/>
+  <text class="buttonText" x="628" y="217">Fetch BibTeX</text>
+
+  <rect class="panel" x="754" y="188" width="200" height="44" rx="6"/>
+  <path d="M780 203v14M773 213l7 7 7-7M772 224h17" fill="none" stroke="#0f2033" stroke-width="2"/>
+  <text class="outlineText" x="800" y="217">Download results</text>
+
+  <rect x="975" y="152" width="105" height="80" rx="8" fill="#fbfcfd" stroke="#cfd8e3"/>
+  <text class="small" x="990" y="180">Total</text>
+  <text class="metric" x="990" y="216">5</text>
+
+  <rect x="1091" y="152" width="105" height="80" rx="8" fill="#ecfdf5" stroke="#86efac"/>
+  <text class="small" x="1105" y="180">OK</text>
+  <text class="metric" x="1105" y="216">5</text>
+
+  <rect x="1207" y="152" width="105" height="80" rx="8" fill="#fff7ed" stroke="#fed7aa"/>
+  <text class="small" x="1221" y="180">Warning</text>
+  <text class="metric" x="1221" y="216">0</text>
+
+  <rect class="panel" x="6" y="273" width="1326" height="232" rx="7"/>
+  <text class="h2" x="27" y="310">Results</text>
+  <text class="muted" x="1275" y="310">Done.</text>
+  <rect x="7" y="333" width="1324" height="44" fill="#edf2f7"/>
+  <line x1="6" y1="333" x2="1332" y2="333" stroke="#cfd8e3"/>
+  <line x1="6" y1="377" x2="1332" y2="377" stroke="#cfd8e3"/>
+
+  <text class="th" x="20" y="361">#</text>
+  <text class="th" x="56" y="361">Input title</text>
+  <text class="th" x="338" y="361">Status</text>
+  <text class="th" x="408" y="361">Matched title</text>
+  <text class="th" x="692" y="361">Score</text>
+  <text class="th" x="757" y="361">DOI</text>
+  <text class="th" x="995" y="361">Source</text>
+  <text class="th" x="1072" y="361">Warning</text>
+  <text class="th" x="1157" y="361">BibTeX</text>
+
+  <text class="td" x="21" y="405">1</text>
+  <text class="td" x="56" y="405">Dual Memory Networks Guided</text>
+  <text class="td" x="56" y="425">Reverse Distillation for Unsupervised</text>
+  <text class="td" x="56" y="445">Anomaly Detection</text>
+
+  <rect x="339" y="390" width="36" height="28" rx="14" fill="#dcfce7"/>
+  <text x="350" y="409" fill="#047857" font-family="Arial, sans-serif" font-size="13" font-weight="700">ok</text>
+
+  <text class="td" x="408" y="405">Dual Memory Networks Guided</text>
+  <text class="td" x="408" y="425">Reverse Distillation for Unsupervised</text>
+  <text class="td" x="408" y="445">Anomaly Detection</text>
+
+  <text class="td" x="694" y="405">1</text>
+  <text class="td" x="757" y="405">10.1007/978-981-96-0960-4_22</text>
+  <text class="td" x="995" y="405">crossref</text>
+  <text class="mono" x="1157" y="405">@inbook{Tran_2024,</text>
+  <text class="mono" x="1157" y="424">  title={Dual</text>
+  <text class="mono" x="1157" y="443">  Memory Networks</text>
+  <text class="mono" x="1157" y="462">  Guided Reverse</text>
+
+  <rect x="1317" y="340" width="10" height="100" rx="5" fill="#8b8f94"/>
+</svg>

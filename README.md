@@ -4,6 +4,10 @@ A localhost app that reads paper titles from an Excel file, searches Google Scho
 
 The app is designed for batch BibTeX collection from a list of paper titles. If a Google Scholar result does not closely match the input title, the app returns a `warning` instead of fetching BibTeX, which helps avoid citations for the wrong paper.
 
+## Preview
+
+![Scholar BibTeX Fetcher UI](docs/app-preview.svg)
+
 ## Features
 
 - Upload `.xlsx` or `.xls` files.
@@ -133,16 +137,32 @@ The downloaded results file includes:
 
 ## BibTeX Lookup Flow
 
-For each title:
-
-1. Call SerpApi with `engine=google_scholar`.
-2. Select the result with the closest title match.
-3. If the match score is below the safe threshold, return `warning`.
-4. If the title matches, keep the Google Scholar `result_id`.
-5. Search Crossref using the matched title and retrieve BibTeX through DOI if available.
-6. If the Scholar result is an arXiv link, infer a DOI such as `10.48550/arXiv...` and retrieve BibTeX through DOI.
-7. If no suitable DOI is found, call SerpApi with `engine=google_scholar_cite`.
-8. Download the BibTeX link returned by Google Scholar Cite.
+```mermaid
+flowchart TD
+  A[Upload Excel file] --> B[Read titles from the first sheet]
+  B --> C[For each paper title]
+  C --> D[Search SerpApi Google Scholar]
+  D --> E[Pick the closest Scholar result]
+  E --> F{Title match score is high enough?}
+  F -- No --> G[Return warning and skip BibTeX]
+  F -- Yes --> H[Keep matched title, result_id, and result link]
+  H --> I[Search Crossref by matched title]
+  I --> J{Crossref DOI match found?}
+  J -- Yes --> K[Fetch BibTeX through DOI content negotiation]
+  J -- No --> L{Scholar result is an arXiv link?}
+  L -- Yes --> M[Infer arXiv DOI: 10.48550/arXiv...]
+  M --> K
+  L -- No --> N[Call SerpApi Google Scholar Cite API]
+  N --> O[Get Scholar BibTeX link]
+  O --> P[Download BibTeX with delay and retry]
+  K --> Q[Mark row as ok]
+  P --> R{Download succeeded?}
+  R -- Yes --> Q
+  R -- No --> S[Return warning with matched metadata]
+  Q --> T[Export Excel results]
+  G --> T
+  S --> T
+```
 
 ## Common Errors
 
