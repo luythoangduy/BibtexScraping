@@ -1,54 +1,55 @@
 # BibtexScraping
 
-Ung dung localhost giup doc danh sach ten bai bao tu file Excel, tim bai tren Google Scholar thong qua SerpApi, lay BibTeX va xuat lai ket qua thanh file `.xlsx`.
+A localhost app that reads paper titles from an Excel file, searches Google Scholar through SerpApi, retrieves BibTeX entries, and exports the results as an `.xlsx` file.
 
-App phu hop khi ban co mot danh sach paper title va muon tu dong tao BibTeX hang loat. Neu ket qua Google Scholar khong khop gan voi ten bai bao dau vao, app se tra ve `warning` thay vi lay BibTeX de tranh nham bai.
+The app is designed for batch BibTeX collection from a list of paper titles. If a Google Scholar result does not closely match the input title, the app returns a `warning` instead of fetching BibTeX, which helps avoid citations for the wrong paper.
 
-## Tinh nang
+## Features
 
-- Upload file Excel `.xlsx` hoac `.xls`.
-- Doc danh sach ten bai bao tu sheet dau tien.
-- Goi SerpApi Google Scholar API de tim ket qua phu hop.
-- Kiem tra do khop giua title dau vao va title tra ve tu Google Scholar.
-- Goi SerpApi Google Scholar Cite API de lay link BibTeX.
-- Hien thi ket qua tren giao dien va cho tai file Excel ket qua.
-- Co san file Excel mau trong project.
+- Upload `.xlsx` or `.xls` files.
+- Read paper titles from the first sheet.
+- Search Google Scholar through SerpApi.
+- Validate the title match between the input and the Scholar result.
+- Prefer DOI-based BibTeX through Crossref and arXiv DOI inference.
+- Fall back to Google Scholar Cite BibTeX when DOI lookup is unavailable.
+- Display results in the browser and download an Excel results file.
+- Include a sample Excel file.
 
-## Yeu cau
+## Requirements
 
-- Node.js 18 tro len.
+- Node.js 18 or newer.
 - npm.
-- SerpApi API key.
+- A SerpApi API key.
 
-Kiem tra nhanh:
+Quick check:
 
 ```powershell
 node --version
 npm.cmd --version
 ```
 
-## Cai dat
+## Installation
 
-Tai thu muc project:
+From the project directory:
 
 ```powershell
 cd d:\toy_proj
 npm.cmd install
 ```
 
-## Cau hinh API key
+## API Key
 
-Co 2 cach su dung SerpApi API key.
+There are two ways to provide your SerpApi API key.
 
-Cach 1: nhap truc tiep tren giao dien app.
+Option 1: enter the key directly in the app UI.
 
-Cach 2: tao file `.env` tu file mau:
+Option 2: create a `.env` file from the example:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Sau do mo `.env` va dien:
+Then edit `.env`:
 
 ```text
 SERPAPI_API_KEY=your_serpapi_key_here
@@ -60,54 +61,53 @@ CROSSREF_MATCH_THRESHOLD=0.9
 CROSSREF_MAILTO=your_email@example.com
 ```
 
-Neu da dat `SERPAPI_API_KEY` trong `.env`, o API key tren giao dien co the de trong.
+If `SERPAPI_API_KEY` is set in `.env`, the API key field in the UI can be left blank.
 
-## Tao file Excel mau
+## Sample Excel File
 
-Project co script tao file mau:
+Generate the sample file:
 
 ```powershell
 npm.cmd run create-sample
 ```
 
-File mau se nam tai:
+The sample file is saved at:
 
 ```text
 samples/sample-papers.xlsx
 ```
 
-## Chay ung dung
+## Run The App
 
 ```powershell
 npm.cmd start
 ```
 
-Mo trinh duyet tai:
+Open the app in your browser:
 
 ```text
 http://localhost:3000
 ```
 
-## Dinh dang Excel dau vao
+## Input Excel Format
 
-App doc sheet dau tien trong file Excel.
+The app reads the first sheet in the workbook.
 
-Cot nen dung:
+Recommended column name:
 
 ```text
 title
 ```
 
-Cac ten cot khac duoc ho tro:
+Other supported column names:
 
 ```text
 paper_title
 article_title
-ten_bai_bao
 publication_title
 ```
 
-Vi du:
+Example:
 
 | title |
 | --- |
@@ -115,56 +115,56 @@ Vi du:
 | BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding |
 | Deep Residual Learning for Image Recognition |
 
-## Ket qua dau ra
+## Output
 
-File ket qua tai ve co cac cot:
+The downloaded results file includes:
 
-- `index`: so thu tu dong.
-- `input_title`: ten bai bao trong Excel dau vao.
-- `status`: `ok` hoac `warning`.
-- `warning`: ly do canh bao neu co.
-- `matched_title`: title app tim thay tren Google Scholar.
-- `match_score`: diem do khop title.
-- `result_id`: Google Scholar result id dung cho Cite API.
-- `result_link`: link ket qua Scholar.
-- `doi`: DOI tim duoc qua Crossref neu co.
-- `bibtex_source`: nguon BibTeX, thuong la `crossref`, `doi` hoac `google_scholar`.
-- `bibtex`: noi dung BibTeX lay duoc.
+- `index`: row number.
+- `input_title`: paper title from the input Excel file.
+- `status`: `ok` or `warning`.
+- `warning`: warning message, if any.
+- `matched_title`: title found through Google Scholar.
+- `match_score`: title match score.
+- `result_id`: Google Scholar result id used for the Cite API.
+- `result_link`: Scholar result link.
+- `doi`: DOI found through Crossref or inferred from arXiv, if available.
+- `bibtex_source`: BibTeX source, usually `crossref`, `doi`, or `google_scholar`.
+- `bibtex`: retrieved BibTeX content.
 
-## Cach app lay BibTeX
+## BibTeX Lookup Flow
 
-Voi moi title:
+For each title:
 
-1. Goi SerpApi voi `engine=google_scholar`.
-2. Chon ket qua co title khop nhat.
-3. Neu diem khop thap hon nguong an toan, tra ve `warning`.
-4. Neu khop, lay `result_id`.
-5. Tim DOI tren Crossref bang title da match va lay BibTeX qua DOI neu khop.
-6. Neu ket qua Scholar la link arXiv, tu suy ra DOI dang `10.48550/arXiv...` va lay BibTeX qua DOI.
-7. Neu khong co DOI phu hop, goi SerpApi voi `engine=google_scholar_cite`.
-8. Lay link `BibTeX` tu Google Scholar va tai noi dung BibTeX.
+1. Call SerpApi with `engine=google_scholar`.
+2. Select the result with the closest title match.
+3. If the match score is below the safe threshold, return `warning`.
+4. If the title matches, keep the Google Scholar `result_id`.
+5. Search Crossref using the matched title and retrieve BibTeX through DOI if available.
+6. If the Scholar result is an arXiv link, infer a DOI such as `10.48550/arXiv...` and retrieve BibTeX through DOI.
+7. If no suitable DOI is found, call SerpApi with `engine=google_scholar_cite`.
+8. Download the BibTeX link returned by Google Scholar Cite.
 
-## Loi thuong gap
+## Common Errors
 
 `Missing SerpApi API key.`
 
-Ban chua nhap API key tren giao dien va cung chua dat `SERPAPI_API_KEY` trong `.env`.
+No key was entered in the UI and `SERPAPI_API_KEY` is not set in `.env`.
 
 `Invalid API key.`
 
-SerpApi API key khong dung hoac chua duoc kich hoat.
+The SerpApi key is incorrect, inactive, or not from SerpApi.
 
 `No paper titles found.`
 
-File Excel khong co cot title hop le. Hay dung cot `title` de don gian nhat.
+The Excel file does not contain a supported title column. Use `title` for the simplest setup.
 
 `Title does not match the Scholar result closely enough.`
 
-Google Scholar co ket qua gan dung nhung app khong xem la du khop. Dong nay se co `warning` va khong lay BibTeX.
+Google Scholar returned a nearby result, but the title match was not strong enough. The app returns `warning` and skips BibTeX for that row.
 
 `BibTeX download was rate-limited by Google Scholar (HTTP 429).`
 
-SerpApi da tim duoc ket qua va link BibTeX, nhung buoc tai noi dung BibTeX tu Google Scholar bi rate-limit. App se uu tien Crossref truoc de tranh loi nay. Neu van gap loi khi Crossref khong co DOI phu hop, hay cho vai phut roi chay lai. Neu danh sach co nhieu bai, tang delay trong `.env`:
+SerpApi found the paper and the Scholar BibTeX link, but Google Scholar rate-limited the direct BibTeX download. The app now tries Crossref and DOI lookup first to avoid this. If the warning still appears, wait a few minutes and retry. For larger batches, increase the delay in `.env`:
 
 ```text
 BIBTEX_DOWNLOAD_DELAY_MS=6000
@@ -178,16 +178,16 @@ BIBTEX_RETRY_BASE_DELAY_MS=8000
 npm.cmd start
 ```
 
-Chay server localhost.
+Start the localhost server.
 
 ```powershell
 npm.cmd run dev
 ```
 
-Chay server o che do watch.
+Start the server in watch mode.
 
 ```powershell
 npm.cmd run create-sample
 ```
 
-Tao lai file Excel mau.
+Regenerate the sample Excel file.

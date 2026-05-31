@@ -20,12 +20,12 @@ form.addEventListener("submit", async (event) => {
   const file = formData.get("file");
 
   if (!file || !file.name) {
-    setStatus("Chon file Excel truoc khi chay.");
+    setStatus("Choose an Excel file before running.");
     return;
   }
 
   setLoading(true);
-  setStatus("Dang xu ly...");
+  setStatus("Processing...");
   renderRows([]);
   resetDownload();
 
@@ -43,9 +43,9 @@ form.addEventListener("submit", async (event) => {
     latestFileName = payload.fileName || latestFileName;
     renderRows(payload.rows || []);
     downloadButton.disabled = !latestWorkbookBase64;
-    setStatus("Hoan tat.");
+    setStatus("Done.");
   } catch (error) {
-    setStatus(error.message || "Co loi xay ra.");
+    setStatus(error.message || "Something went wrong.");
   } finally {
     setLoading(false);
   }
@@ -71,7 +71,7 @@ function renderRows(rows) {
   warningCount.textContent = String(rows.filter((row) => row.status !== "ok").length);
 
   if (rows.length === 0) {
-    resultsBody.innerHTML = `<tr class="empty-row"><td colspan="9">Chua co ket qua.</td></tr>`;
+    resultsBody.innerHTML = `<tr class="empty-row"><td colspan="9">No results yet.</td></tr>`;
     return;
   }
 
@@ -97,8 +97,8 @@ function renderRows(rows) {
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
   submitButton.innerHTML = isLoading
-    ? `<i data-lucide="loader-circle"></i> Dang chay`
-    : `<i data-lucide="search"></i> Lay BibTeX`;
+    ? `<i data-lucide="loader-circle"></i> Running`
+    : `<i data-lucide="search"></i> Fetch BibTeX`;
   if (window.lucide) {
     window.lucide.createIcons();
   }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,7 +15,7 @@
         </div>
         <a class="sample-link" href="/samples/sample-papers.xlsx" download>
           <i data-lucide="file-spreadsheet"></i>
-          Excel mau
+          Sample Excel
         </a>
       </section>
 
@@ -28,7 +28,7 @@
               name="apiKey"
               type="password"
               autocomplete="off"
-              placeholder="De trong neu da dat SERPAPI_API_KEY"
+              placeholder="Leave blank if SERPAPI_API_KEY is set"
             />
           </label>
 
@@ -40,18 +40,18 @@
           <div class="actions">
             <button id="submit-button" type="submit">
               <i data-lucide="search"></i>
-              Lay BibTeX
+              Fetch BibTeX
             </button>
             <button id="download-button" type="button" disabled>
               <i data-lucide="download"></i>
-              Tai ket qua
+              Download results
             </button>
           </div>
         </form>
 
         <aside class="status-panel">
           <div class="metric">
-            <span>Tong</span>
+            <span>Total</span>
             <strong id="total-count">0</strong>
           </div>
           <div class="metric ok">
@@ -67,8 +67,8 @@
 
       <section class="result-section">
         <div class="result-header">
-          <h2>Ket qua</h2>
-          <span id="status-text">San sang</span>
+          <h2>Results</h2>
+          <span id="status-text">Ready</span>
         </div>
         <div class="table-wrap">
           <table>
@@ -87,7 +87,7 @@
             </thead>
             <tbody id="results-body">
               <tr class="empty-row">
-                <td colspan="9">Chua co ket qua.</td>
+                <td colspan="9">No results yet.</td>
               </tr>
             </tbody>
           </table>

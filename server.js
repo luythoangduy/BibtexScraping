@@ -41,7 +41,7 @@ app.post("/api/lookup", upload.single("file"), async (req, res) => {
     const titles = await extractTitles(req.file.buffer);
     if (titles.length === 0) {
       return res.status(400).json({
-        error: "No paper titles found. Use a column named title or ten_bai_bao.",
+        error: "No paper titles found. Use a column named title.",
       });
     }
 
