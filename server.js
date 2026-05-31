@@ -18,6 +18,7 @@ const BIBTEX_RETRY_ATTEMPTS = Number(process.env.BIBTEX_RETRY_ATTEMPTS || 4);
 const BIBTEX_RETRY_BASE_DELAY_MS = Number(
   process.env.BIBTEX_RETRY_BASE_DELAY_MS || 5000
 );
+const CROSSREF_MATCH_THRESHOLD = Number(process.env.CROSSREF_MATCH_THRESHOLD || 0.9);
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -124,6 +125,8 @@ async function lookupOneTitle({ title, apiKey, index }) {
     matchScore: 0,
     resultId: "",
     resultLink: "",
+    doi: "",
+    bibtexSource: "",
     bibtex: "",
   };
 
@@ -191,9 +194,14 @@ async function lookupOneTitle({ title, apiKey, index }) {
       resultLink: match.result.link || "",
     };
 
-    let bibtex = "";
+    let bibtexResult = null;
     try {
-      bibtex = await fetchTextWithRetry(bibtexLink);
+      bibtexResult = await getBibtex({
+        inputTitle: title,
+        matchedTitle: match.result.title || title,
+        resultLink: match.result.link || "",
+        scholarBibtexLink: bibtexLink,
+      });
     } catch (error) {
       return {
         ...matchedRow,
@@ -205,7 +213,9 @@ async function lookupOneTitle({ title, apiKey, index }) {
       ...matchedRow,
       status: "ok",
       warning: "",
-      bibtex,
+      doi: bibtexResult.doi || "",
+      bibtexSource: bibtexResult.source,
+      bibtex: bibtexResult.bibtex,
     };
   } catch (error) {
     return {
@@ -228,6 +238,99 @@ async function serpApiSearch(params) {
     throw new Error(data.error || `SerpApi request failed with HTTP ${response.status}.`);
   }
   return data;
+}
+
+async function getBibtex({ inputTitle, matchedTitle, resultLink, scholarBibtexLink }) {
+  const crossrefResult = await getCrossrefBibtex(matchedTitle).catch(() => null);
+  if (crossrefResult) {
+    return crossrefResult;
+  }
+
+  const crossrefInputResult =
+    normalizeTitle(inputTitle) === normalizeTitle(matchedTitle)
+      ? null
+      : await getCrossrefBibtex(inputTitle).catch(() => null);
+  if (crossrefInputResult) {
+    return crossrefInputResult;
+  }
+
+  const inferredDoi = inferDoiFromLink(resultLink);
+  if (inferredDoi) {
+    return {
+      source: "doi",
+      doi: inferredDoi,
+      bibtex: await fetchDoiBibtex(inferredDoi),
+    };
+  }
+
+  return {
+    source: "google_scholar",
+    doi: "",
+    bibtex: await fetchTextWithRetry(scholarBibtexLink),
+  };
+}
+
+function inferDoiFromLink(link) {
+  const arxivMatch = String(link).match(/arxiv\.org\/abs\/([^?#]+)/i);
+  if (arxivMatch) {
+    return `10.48550/arXiv.${arxivMatch[1].replace(/^arXiv:/i, "")}`;
+  }
+
+  const doiMatch = String(link).match(/10\.\d{4,9}\/[^\s?#]+/i);
+  return doiMatch ? doiMatch[0] : "";
+}
+
+async function getCrossrefBibtex(title) {
+  const match = await findCrossrefMatch(title);
+  if (!match?.doi) {
+    return null;
+  }
+
+  return {
+    source: "crossref",
+    doi: match.doi,
+    bibtex: await fetchDoiBibtex(match.doi),
+  };
+}
+
+async function findCrossrefMatch(title) {
+  const url = new URL("https://api.crossref.org/works");
+  url.searchParams.set("query.bibliographic", title);
+  url.searchParams.set("rows", "5");
+  url.searchParams.set("select", "DOI,title");
+
+  const response = await fetch(url, { headers: requestHeaders() });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.status !== "ok") {
+    return null;
+  }
+
+  let best = null;
+  for (const item of data.message?.items || []) {
+    const candidateTitle = Array.isArray(item.title) ? item.title[0] : item.title;
+    if (!candidateTitle || !item.DOI) continue;
+    const score = titleSimilarity(title, candidateTitle);
+    if (!best || score > best.score) {
+      best = { doi: item.DOI, title: candidateTitle, score };
+    }
+  }
+
+  return best && best.score >= CROSSREF_MATCH_THRESHOLD ? best : null;
+}
+
+async function fetchDoiBibtex(doi) {
+  const response = await fetch(`https://doi.org/${encodeURI(doi)}`, {
+    redirect: "follow",
+    headers: {
+      ...requestHeaders(),
+      Accept: "application/x-bibtex",
+    },
+  });
+  const text = await response.text();
+  if (!response.ok || !text.trim().startsWith("@")) {
+    throw new Error(`Crossref BibTeX lookup failed for DOI ${doi}.`);
+  }
+  return text.trim();
 }
 
 async function fetchTextWithRetry(url) {
@@ -260,7 +363,7 @@ async function fetchTextWithRetry(url) {
 async function fetchText(url) {
   const response = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 Scholar BibTeX Fetcher",
+      ...requestHeaders(),
       Referer: "https://scholar.google.com/",
       Accept: "text/plain,*/*",
     },
@@ -282,6 +385,14 @@ async function fetchText(url) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function requestHeaders() {
+  const mailto = process.env.CROSSREF_MAILTO || "";
+  const suffix = mailto ? ` (mailto:${mailto})` : "";
+  return {
+    "User-Agent": `ScholarBibTeXFetcher/1.0${suffix}`,
+  };
 }
 
 function pickBestTitleMatch(inputTitle, results) {
@@ -360,6 +471,8 @@ async function buildResultsWorkbook(rows) {
       "match_score",
       "result_id",
       "result_link",
+      "doi",
+      "bibtex_source",
       "bibtex",
     ],
     ...rows.map((row) => [
@@ -371,6 +484,8 @@ async function buildResultsWorkbook(rows) {
       row.matchScore,
       row.resultId,
       row.resultLink,
+      row.doi,
+      row.bibtexSource,
       row.bibtex,
     ]),
   ];
@@ -396,6 +511,8 @@ async function buildResultsWorkbook(rows) {
     { wch: 12 },
     { wch: 18 },
     { wch: 44 },
+    { wch: 28 },
+    { wch: 18 },
     { wch: 90 },
   ].map((column) => ({ width: column.wch }));
 

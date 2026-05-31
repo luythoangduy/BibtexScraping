@@ -56,6 +56,8 @@ PORT=3000
 BIBTEX_DOWNLOAD_DELAY_MS=2500
 BIBTEX_RETRY_ATTEMPTS=4
 BIBTEX_RETRY_BASE_DELAY_MS=5000
+CROSSREF_MATCH_THRESHOLD=0.9
+CROSSREF_MAILTO=your_email@example.com
 ```
 
 Neu da dat `SERPAPI_API_KEY` trong `.env`, o API key tren giao dien co the de trong.
@@ -125,6 +127,8 @@ File ket qua tai ve co cac cot:
 - `match_score`: diem do khop title.
 - `result_id`: Google Scholar result id dung cho Cite API.
 - `result_link`: link ket qua Scholar.
+- `doi`: DOI tim duoc qua Crossref neu co.
+- `bibtex_source`: nguon BibTeX, thuong la `crossref`, `doi` hoac `google_scholar`.
 - `bibtex`: noi dung BibTeX lay duoc.
 
 ## Cach app lay BibTeX
@@ -135,8 +139,10 @@ Voi moi title:
 2. Chon ket qua co title khop nhat.
 3. Neu diem khop thap hon nguong an toan, tra ve `warning`.
 4. Neu khop, lay `result_id`.
-5. Goi SerpApi voi `engine=google_scholar_cite`.
-6. Lay link `BibTeX` va tai noi dung BibTeX.
+5. Tim DOI tren Crossref bang title da match va lay BibTeX qua DOI neu khop.
+6. Neu ket qua Scholar la link arXiv, tu suy ra DOI dang `10.48550/arXiv...` va lay BibTeX qua DOI.
+7. Neu khong co DOI phu hop, goi SerpApi voi `engine=google_scholar_cite`.
+8. Lay link `BibTeX` tu Google Scholar va tai noi dung BibTeX.
 
 ## Loi thuong gap
 
@@ -158,7 +164,7 @@ Google Scholar co ket qua gan dung nhung app khong xem la du khop. Dong nay se c
 
 `BibTeX download was rate-limited by Google Scholar (HTTP 429).`
 
-SerpApi da tim duoc ket qua va link BibTeX, nhung buoc tai noi dung BibTeX tu Google Scholar bi rate-limit. Hay cho vai phut roi chay lai. Neu danh sach co nhieu bai, tang delay trong `.env`:
+SerpApi da tim duoc ket qua va link BibTeX, nhung buoc tai noi dung BibTeX tu Google Scholar bi rate-limit. App se uu tien Crossref truoc de tranh loi nay. Neu van gap loi khi Crossref khong co DOI phu hop, hay cho vai phut roi chay lai. Neu danh sach co nhieu bai, tang delay trong `.env`:
 
 ```text
 BIBTEX_DOWNLOAD_DELAY_MS=6000

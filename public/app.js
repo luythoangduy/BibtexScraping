@@ -71,7 +71,7 @@ function renderRows(rows) {
   warningCount.textContent = String(rows.filter((row) => row.status !== "ok").length);
 
   if (rows.length === 0) {
-    resultsBody.innerHTML = `<tr class="empty-row"><td colspan="7">Chua co ket qua.</td></tr>`;
+    resultsBody.innerHTML = `<tr class="empty-row"><td colspan="9">Chua co ket qua.</td></tr>`;
     return;
   }
 
@@ -84,6 +84,8 @@ function renderRows(rows) {
           <td><span class="${row.status === "ok" ? "status-ok" : "status-warning"}">${escapeHtml(row.status)}</span></td>
           <td>${escapeHtml(row.matchedTitle || "")}</td>
           <td>${escapeHtml(row.matchScore ?? "")}</td>
+          <td>${escapeHtml(row.doi || "")}</td>
+          <td>${escapeHtml(row.bibtexSource || "")}</td>
           <td>${escapeHtml(row.warning || "")}</td>
           <td class="mono">${escapeHtml(row.bibtex || "")}</td>
         </tr>
