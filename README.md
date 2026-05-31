@@ -132,7 +132,7 @@ The downloaded results file includes:
 - `result_id`: Google Scholar result id used for the Cite API.
 - `result_link`: Scholar result link.
 - `doi`: DOI found through Crossref or inferred from arXiv, if available.
-- `bibtex_source`: BibTeX source, usually `crossref`, `doi`, or `google_scholar`.
+- `bibtex_source`: BibTeX source, usually `crossref`, `arxiv`, `doi`, or `google_scholar`.
 - `bibtex`: retrieved BibTeX content.
 
 ## BibTeX Lookup Flow
@@ -150,8 +150,9 @@ flowchart TD
   I --> J{Crossref DOI match found?}
   J -- Yes --> K[Fetch BibTeX through DOI content negotiation]
   J -- No --> L{Scholar result is an arXiv link?}
-  L -- Yes --> M[Infer arXiv DOI: 10.48550/arXiv...]
-  M --> K
+  L -- Yes --> M[Call arXiv API by arXiv ID]
+  M --> U[Use arXiv DOI metadata or 10.48550/arXiv fallback]
+  U --> K
   L -- No --> N[Call SerpApi Google Scholar Cite API]
   N --> O[Get Scholar BibTeX link]
   O --> P[Download BibTeX with delay and retry]

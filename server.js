@@ -154,38 +154,7 @@ async function lookupOneTitle({ title, apiKey, index }) {
       };
     }
 
-    const resultId = match.result.result_id;
-    if (!resultId) {
-      return {
-        ...baseRow,
-        matchedTitle: match.result.title || "",
-        matchScore: roundScore(match.score),
-        resultLink: match.result.link || "",
-        warning: "Matched title, but Scholar result has no result_id for Cite API.",
-      };
-    }
-
-    const citeData = await serpApiSearch({
-      engine: "google_scholar_cite",
-      apiKey,
-      q: resultId,
-      hl: "en",
-    });
-    const bibtexLink = (citeData.links || []).find(
-      (link) => normalizeHeader(link.name) === "bibtex"
-    )?.link;
-
-    if (!bibtexLink) {
-      return {
-        ...baseRow,
-        matchedTitle: match.result.title || "",
-        matchScore: roundScore(match.score),
-        resultId,
-        resultLink: match.result.link || "",
-        warning: "Matched title, but SerpApi Cite API did not return a BibTeX link.",
-      };
-    }
-
+    const resultId = match.result.result_id || "";
     const matchedRow = {
       ...baseRow,
       matchedTitle: match.result.title || "",
@@ -200,7 +169,6 @@ async function lookupOneTitle({ title, apiKey, index }) {
         inputTitle: title,
         matchedTitle: match.result.title || title,
         resultLink: match.result.link || "",
-        scholarBibtexLink: bibtexLink,
       });
     } catch (error) {
       return {
@@ -209,13 +177,32 @@ async function lookupOneTitle({ title, apiKey, index }) {
       };
     }
 
+    if (bibtexResult) {
+      return {
+        ...matchedRow,
+        status: "ok",
+        warning: "",
+        doi: bibtexResult.doi || "",
+        bibtexSource: bibtexResult.source,
+        bibtex: bibtexResult.bibtex,
+      };
+    }
+
+    if (!resultId) {
+      return {
+        ...matchedRow,
+        warning: "Matched title, but Scholar result has no result_id for Cite API.",
+      };
+    }
+
+    const scholarBibtexResult = await getScholarBibtex({ apiKey, resultId });
     return {
       ...matchedRow,
       status: "ok",
       warning: "",
-      doi: bibtexResult.doi || "",
-      bibtexSource: bibtexResult.source,
-      bibtex: bibtexResult.bibtex,
+      doi: "",
+      bibtexSource: scholarBibtexResult.source,
+      bibtex: scholarBibtexResult.bibtex,
     };
   } catch (error) {
     return {
@@ -240,10 +227,15 @@ async function serpApiSearch(params) {
   return data;
 }
 
-async function getBibtex({ inputTitle, matchedTitle, resultLink, scholarBibtexLink }) {
+async function getBibtex({ inputTitle, matchedTitle, resultLink }) {
   const crossrefResult = await getCrossrefBibtex(matchedTitle).catch(() => null);
   if (crossrefResult) {
     return crossrefResult;
+  }
+
+  const arxivResult = await getArxivBibtex(resultLink, matchedTitle).catch(() => null);
+  if (arxivResult) {
+    return arxivResult;
   }
 
   const crossrefInputResult =
@@ -263,21 +255,119 @@ async function getBibtex({ inputTitle, matchedTitle, resultLink, scholarBibtexLi
     };
   }
 
+  return null;
+}
+
+async function getScholarBibtex({ apiKey, resultId }) {
+  const citeData = await serpApiSearch({
+    engine: "google_scholar_cite",
+    apiKey,
+    q: resultId,
+    hl: "en",
+  });
+  const bibtexLink = (citeData.links || []).find(
+    (link) => normalizeHeader(link.name) === "bibtex"
+  )?.link;
+
+  if (!bibtexLink) {
+    throw new Error("Matched title, but SerpApi Cite API did not return a BibTeX link.");
+  }
+
   return {
     source: "google_scholar",
     doi: "",
-    bibtex: await fetchTextWithRetry(scholarBibtexLink),
+    bibtex: await fetchTextWithRetry(bibtexLink),
   };
 }
 
 function inferDoiFromLink(link) {
-  const arxivMatch = String(link).match(/arxiv\.org\/abs\/([^?#]+)/i);
-  if (arxivMatch) {
-    return `10.48550/arXiv.${arxivMatch[1].replace(/^arXiv:/i, "")}`;
-  }
-
   const doiMatch = String(link).match(/10\.\d{4,9}\/[^\s?#]+/i);
   return doiMatch ? doiMatch[0] : "";
+}
+
+async function getArxivBibtex(link, matchedTitle) {
+  const arxivId = extractArxivIdFromLink(link);
+  if (!arxivId) {
+    return null;
+  }
+
+  const metadata = await fetchArxivMetadata(arxivId);
+  if (!metadata) {
+    return null;
+  }
+
+  if (metadata.title && titleSimilarity(matchedTitle, metadata.title) < 0.85) {
+    return null;
+  }
+
+  const doi = metadata.doi || `10.48550/arXiv.${metadata.idWithoutVersion}`;
+  return {
+    source: "arxiv",
+    doi,
+    bibtex: await fetchDoiBibtex(doi),
+  };
+}
+
+function extractArxivIdFromLink(link) {
+  const match = String(link).match(/arxiv\.org\/abs\/([^?#]+)/i);
+  return match ? normalizeArxivId(match[1]) : "";
+}
+
+function normalizeArxivId(value) {
+  return String(value).replace(/^arXiv:/i, "").trim();
+}
+
+async function fetchArxivMetadata(arxivId) {
+  const id = normalizeArxivId(arxivId);
+  const url = new URL("https://export.arxiv.org/api/query");
+  url.searchParams.set("id_list", id);
+  url.searchParams.set("max_results", "1");
+
+  const response = await fetch(url, { headers: requestHeaders() });
+  const xml = await response.text();
+  if (!response.ok) {
+    return null;
+  }
+
+  const entry = xml.match(/<entry\b[\s\S]*?<\/entry>/i)?.[0];
+  if (!entry) {
+    return null;
+  }
+
+  const entryId =
+    textFromXml(entry, "id")
+      .replace(/^https?:\/\/arxiv\.org\/abs\//i, "")
+      .trim() || id;
+  const idWithoutVersion = entryId.replace(/v\d+$/i, "");
+
+  return {
+    id: entryId,
+    idWithoutVersion,
+    title: normalizeXmlText(textFromXml(entry, "title")),
+    summary: normalizeXmlText(textFromXml(entry, "summary")),
+    doi: normalizeXmlText(textFromXml(entry, "arxiv:doi")),
+  };
+}
+
+function textFromXml(xml, tagName) {
+  const escapedTag = tagName.replace(":", "\\:");
+  const match = xml.match(
+    new RegExp(`<${escapedTag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${escapedTag}>`, "i")
+  );
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function normalizeXmlText(value) {
+  return String(value).replace(/\s+/g, " ").trim();
+}
+
+function decodeXmlEntities(value) {
+  return String(value)
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
 }
 
 async function getCrossrefBibtex(title) {
