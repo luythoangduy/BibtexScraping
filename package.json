@@ -1,0 +1,19 @@
+{
+  "name": "scholar-bibtex-fetcher",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local app that reads paper titles from Excel and fetches BibTeX via SerpApi Google Scholar.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "create-sample": "node scripts/create-sample.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "read-excel-file": "^9.0.10",
+    "write-excel-file": "^4.0.7"
+  }
+}

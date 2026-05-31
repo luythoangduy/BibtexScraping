@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scholar BibTeX Fetcher</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="toolbar" aria-label="Input controls">
+        <div>
+          <h1>Scholar BibTeX Fetcher</h1>
+          <p>Excel title list to BibTeX via SerpApi Google Scholar.</p>
+        </div>
+        <a class="sample-link" href="/samples/sample-papers.xlsx" download>
+          <i data-lucide="file-spreadsheet"></i>
+          Excel mau
+        </a>
+      </section>
+
+      <section class="workspace">
+        <form id="lookup-form" class="input-panel">
+          <label>
+            <span>SerpApi API key</span>
+            <input
+              id="api-key"
+              name="apiKey"
+              type="password"
+              autocomplete="off"
+              placeholder="De trong neu da dat SERPAPI_API_KEY"
+            />
+          </label>
+
+          <label>
+            <span>Excel file</span>
+            <input id="file" name="file" type="file" accept=".xlsx,.xls" required />
+          </label>
+
+          <div class="actions">
+            <button id="submit-button" type="submit">
+              <i data-lucide="search"></i>
+              Lay BibTeX
+            </button>
+            <button id="download-button" type="button" disabled>
+              <i data-lucide="download"></i>
+              Tai ket qua
+            </button>
+          </div>
+        </form>
+
+        <aside class="status-panel">
+          <div class="metric">
+            <span>Tong</span>
+            <strong id="total-count">0</strong>
+          </div>
+          <div class="metric ok">
+            <span>OK</span>
+            <strong id="ok-count">0</strong>
+          </div>
+          <div class="metric warning">
+            <span>Warning</span>
+            <strong id="warning-count">0</strong>
+          </div>
+        </aside>
+      </section>
+
+      <section class="result-section">
+        <div class="result-header">
+          <h2>Ket qua</h2>
+          <span id="status-text">San sang</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Input title</th>
+                <th>Status</th>
+                <th>Matched title</th>
+                <th>Score</th>
+                <th>Warning</th>
+                <th>BibTeX</th>
+              </tr>
+            </thead>
+            <tbody id="results-body">
+              <tr class="empty-row">
+                <td colspan="7">Chua co ket qua.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
