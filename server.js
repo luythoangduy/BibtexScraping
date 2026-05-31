@@ -199,7 +199,10 @@ async function lookupOneTitle({ title, apiKey, index }) {
 
 async function serpApiSearch(params) {
   const url = new URL("https://serpapi.com/search.json");
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  Object.entries(params).forEach(([key, value]) => {
+    const paramName = key === "apiKey" ? "api_key" : key;
+    url.searchParams.set(paramName, value);
+  });
 
   const response = await fetch(url);
   const data = await response.json().catch(() => ({}));
