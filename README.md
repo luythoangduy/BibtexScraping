@@ -53,6 +53,9 @@ Sau do mo `.env` va dien:
 ```text
 SERPAPI_API_KEY=your_serpapi_key_here
 PORT=3000
+BIBTEX_DOWNLOAD_DELAY_MS=2500
+BIBTEX_RETRY_ATTEMPTS=4
+BIBTEX_RETRY_BASE_DELAY_MS=5000
 ```
 
 Neu da dat `SERPAPI_API_KEY` trong `.env`, o API key tren giao dien co the de trong.
@@ -152,6 +155,16 @@ File Excel khong co cot title hop le. Hay dung cot `title` de don gian nhat.
 `Title does not match the Scholar result closely enough.`
 
 Google Scholar co ket qua gan dung nhung app khong xem la du khop. Dong nay se co `warning` va khong lay BibTeX.
+
+`BibTeX download was rate-limited by Google Scholar (HTTP 429).`
+
+SerpApi da tim duoc ket qua va link BibTeX, nhung buoc tai noi dung BibTeX tu Google Scholar bi rate-limit. Hay cho vai phut roi chay lai. Neu danh sach co nhieu bai, tang delay trong `.env`:
+
+```text
+BIBTEX_DOWNLOAD_DELAY_MS=6000
+BIBTEX_RETRY_ATTEMPTS=5
+BIBTEX_RETRY_BASE_DELAY_MS=8000
+```
 
 ## Scripts
 

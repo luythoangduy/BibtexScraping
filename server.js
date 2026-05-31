@@ -13,6 +13,11 @@ const upload = multer({
 
 const PORT = Number(process.env.PORT || 3000);
 const MATCH_THRESHOLD = 0.92;
+const BIBTEX_DOWNLOAD_DELAY_MS = Number(process.env.BIBTEX_DOWNLOAD_DELAY_MS || 2500);
+const BIBTEX_RETRY_ATTEMPTS = Number(process.env.BIBTEX_RETRY_ATTEMPTS || 4);
+const BIBTEX_RETRY_BASE_DELAY_MS = Number(
+  process.env.BIBTEX_RETRY_BASE_DELAY_MS || 5000
+);
 
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -178,15 +183,28 @@ async function lookupOneTitle({ title, apiKey, index }) {
       };
     }
 
-    const bibtex = await fetchText(bibtexLink);
-    return {
+    const matchedRow = {
       ...baseRow,
-      status: "ok",
-      warning: "",
       matchedTitle: match.result.title || "",
       matchScore: roundScore(match.score),
       resultId,
       resultLink: match.result.link || "",
+    };
+
+    let bibtex = "";
+    try {
+      bibtex = await fetchTextWithRetry(bibtexLink);
+    } catch (error) {
+      return {
+        ...matchedRow,
+        warning: error.message || "BibTeX download failed.",
+      };
+    }
+
+    return {
+      ...matchedRow,
+      status: "ok",
+      warning: "",
       bibtex,
     };
   } catch (error) {
@@ -212,18 +230,58 @@ async function serpApiSearch(params) {
   return data;
 }
 
+async function fetchTextWithRetry(url) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= BIBTEX_RETRY_ATTEMPTS; attempt += 1) {
+    if (BIBTEX_DOWNLOAD_DELAY_MS > 0) {
+      await sleep(BIBTEX_DOWNLOAD_DELAY_MS);
+    }
+
+    try {
+      return await fetchText(url);
+    } catch (error) {
+      lastError = error;
+      const shouldRetry = error.status === 429 || error.status >= 500;
+      if (!shouldRetry || attempt === BIBTEX_RETRY_ATTEMPTS) {
+        break;
+      }
+
+      const retryAfterMs = Number(error.retryAfterSeconds || 0) * 1000;
+      const backoffMs =
+        retryAfterMs ||
+        BIBTEX_RETRY_BASE_DELAY_MS * attempt + Math.floor(Math.random() * 1000);
+      await sleep(backoffMs);
+    }
+  }
+
+  throw lastError || new Error("BibTeX download failed.");
+}
+
 async function fetchText(url) {
   const response = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 Scholar BibTeX Fetcher",
+      Referer: "https://scholar.google.com/",
       Accept: "text/plain,*/*",
     },
   });
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`BibTeX download failed with HTTP ${response.status}.`);
+    const retryAfter = response.headers.get("retry-after");
+    const error = new Error(
+      response.status === 429
+        ? "BibTeX download was rate-limited by Google Scholar (HTTP 429). Try again later or increase BIBTEX_DOWNLOAD_DELAY_MS."
+        : `BibTeX download failed with HTTP ${response.status}.`
+    );
+    error.status = response.status;
+    error.retryAfterSeconds = retryAfter ? Number(retryAfter) : 0;
+    throw error;
   }
   return text.trim();
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function pickBestTitleMatch(inputTitle, results) {
